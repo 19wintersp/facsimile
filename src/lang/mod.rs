@@ -15,10 +15,11 @@ pub fn eval_str(src: &str) -> Result<runtime::Value, Error> {
 	todo!()
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub struct Error {
 	pub kind: ErrorKind,
 	pub location: LocationArea,
+	pub message: String,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
