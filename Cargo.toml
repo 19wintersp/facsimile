@@ -1,0 +1,14 @@
+[package]
+name = "lisp-like"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+maplit = "1.0"
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "lisp-like"
+path = "src/main.rs"
