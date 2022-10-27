@@ -55,11 +55,39 @@ impl<'a, I: Iterator<Item = char>> Iterator for Lexer<'a, I> {
 			'.' => TokenKind::Dot,
 
 			'A'..='Z' | 'a'..='z' | '_' => {
-				todo!()
+				let mut symbol = String::from(ch);
+				while let Some('0'..='9' | 'A'..='Z' | 'a'..='z' | '_') = self.src.peek() {
+					symbol.push(self.eat().unwrap());
+				}
+
+				match symbol.as_str() {
+					"env" => TokenKind::Env,
+					"func" => TokenKind::Func,
+					"let" => TokenKind::Let,
+
+					"true" => TokenKind::Boolean(true),
+					"false" => TokenKind::Boolean(false),
+					"nil" => TokenKind::Nil,
+
+					_ => TokenKind::Symbol(Symbol::new(symbol).unwrap()),
+				}
 			},
 
-			'0'..='9' => {
-				todo!()
+			'-' | '+' | '0'..='9' => {
+				let mut number = String::from(ch);
+				while let Some('0'..='9' | '_' | '.' | 'E' | 'e') = self.src.peek() {
+					number.push(self.eat().unwrap());
+				}
+
+				use std::str::FromStr;
+				TokenKind::Number(match f32::from_str(&number) {
+					Ok(number) => number,
+					Err(_) => return Some(Err(super::Error {
+						kind: super::ErrorKind::SyntaxError,
+						location: super::LocationArea { start, end: self.current },
+						message: "invalid number literal".into(),
+					})),
+				})
 			},
 			'"' => {
 				todo!()
