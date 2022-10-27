@@ -37,6 +37,10 @@ impl<'a, I: Iterator<Item = char>> Iterator for Lexer<'a, I> {
 		let ch = self.eat()?;
 		let start = self.current;
 
+		if ch.is_ascii_whitespace() {
+			return self.next()
+		}
+
 		let kind = match ch {
 			'(' => TokenKind::LeftParen,
 			')' => TokenKind::RightParen,
