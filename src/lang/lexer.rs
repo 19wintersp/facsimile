@@ -1,5 +1,5 @@
 pub struct Lexer<'a, I: Iterator<Item = char>> {
-	src: &'a mut I,
+	src: std::iter::Peekable<&'a mut I>,
 	location: super::LocationPoint,
 	current: super::LocationPoint,
 }
@@ -7,7 +7,7 @@ pub struct Lexer<'a, I: Iterator<Item = char>> {
 impl<'a, I: Iterator<Item = char>> Lexer<'a, I> {
 	pub fn new(src: &'a mut I) -> Self {
 		Self {
-			src,
+			src: src.peekable(),
 			location: super::LocationPoint::default(),
 			current: super::LocationPoint::default(),
 		}
@@ -34,12 +34,16 @@ impl<'a, I: Iterator<Item = char>> Iterator for Lexer<'a, I> {
 	type Item = Result<Token, super::Error>;
 
 	fn next(&mut self) -> Option<Self::Item> {
+		while let Some(ch) = self.src.peek() {
+			if ch.is_ascii_whitespace() {
+				self.eat();
+			} else {
+				break
+			}
+		}
+
 		let ch = self.eat()?;
 		let start = self.current;
-
-		if ch.is_ascii_whitespace() {
-			return self.next()
-		}
 
 		let kind = match ch {
 			'(' => TokenKind::LeftParen,
@@ -68,6 +72,29 @@ impl<'a, I: Iterator<Item = char>> Iterator for Lexer<'a, I> {
 			})),
 		};
 
+		if
+			kind != TokenKind::LeftParen &&
+			kind != TokenKind::LeftBracket &&
+			kind != TokenKind::LeftBrace &&
+			kind != TokenKind::Dot
+		{
+			if let Some(ch) = self.src.peek() {
+				let exempt = if let TokenKind::Symbol(_) = kind {
+					*ch == '.'
+				} else {
+					false
+				};
+
+				if !exempt && !ch.is_ascii_whitespace() {
+					return Some(Err(super::Error {
+						kind: super::ErrorKind::SyntaxError,
+						location: self.location.into(),
+						message: "expected delimeter".into(),
+					}))
+				}
+			}
+		}
+
 		Some(Ok(Token {
 			kind,
 			location: super::LocationArea { start, end: self.current },
@@ -75,11 +102,13 @@ impl<'a, I: Iterator<Item = char>> Iterator for Lexer<'a, I> {
 	}
 }
 
+#[derive(Clone, Debug, PartialEq)]
 pub struct Token {
 	pub(super) kind: TokenKind,
 	pub location: super::LocationArea,
 }
 
+#[derive(Clone, Debug, PartialEq)]
 pub enum TokenKind {
 	LeftParen,
 	RightParen,
@@ -101,6 +130,7 @@ pub enum TokenKind {
 	Nil,
 }
 
+#[derive(Clone, Debug, PartialEq, Hash)]
 pub struct Symbol(pub(super) String);
 
 impl Symbol {
