@@ -12,6 +12,8 @@ pub fn eval(src: &mut impl Read) -> Result<runtime::Value, Error> {
 }
 
 pub fn eval_str(src: &str) -> Result<runtime::Value, Error> {
+	let _lexer = lexer::Lexer::new(&mut src.chars());
+
 	todo!()
 }
 
