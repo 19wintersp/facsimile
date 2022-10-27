@@ -33,6 +33,12 @@ pub struct LocationArea {
 	pub end: LocationPoint,
 }
 
+impl From<LocationPoint> for LocationArea {
+	fn from(point: LocationPoint) -> Self {
+		Self { start: point, end: point }
+	}
+}
+
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq, Hash)]
 pub struct LocationPoint {
 	pub index: usize,
