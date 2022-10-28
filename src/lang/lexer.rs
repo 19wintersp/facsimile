@@ -30,6 +30,16 @@ impl<'a, I: Iterator<Item = char>> Lexer<'a, I> {
 
 		Some(ch)
 	}
+
+	fn eat_n(&mut self, n: usize) -> Option<String> {
+		let mut string = String::new();
+
+		for _ in 0..n {
+			string.push(self.eat()?);
+		}
+
+		Some(string)
+	}
 }
 
 impl<'a, I: Iterator<Item = char>> Iterator for Lexer<'a, I> {
@@ -87,8 +97,127 @@ impl<'a, I: Iterator<Item = char>> Iterator for Lexer<'a, I> {
 					})),
 				})
 			},
-			'"' => {
-				todo!()
+			'"' | '\'' => {
+				let mut string = String::new();
+				loop {
+					if let Some(nch) = self.eat() {
+						if nch == ch {
+							break
+						} else if nch == '\\' {
+							let before = self.current;
+							if let Some(ech) = self.eat() {
+								string.push(match ech {
+									'x' => match self.eat_n(2) {
+										Some(hex) => match u8::from_str_radix(&hex, 16) {
+											Ok(octet) => octet as char,
+											Err(_) => return Some(Err(Error {
+												kind: ErrorKind::SyntaxError,
+												location: LocationArea {
+													start: before,
+													end: self.current,
+												},
+												message: format!("{:?} is invalid hex", hex),
+											})),
+										},
+										None => return Some(Err(Error {
+											kind: ErrorKind::SyntaxError,
+											location: self.current.into(),
+											message: "unexpected end whilst parsing escape".into(),
+										})),
+									},
+									'u' => match self.eat_n(4) {
+										Some(hex) => match u16::from_str_radix(&hex, 16) {
+											Ok(word) => match char::from_u32(word as u32) {
+												Some(uni) => uni,
+												None => return Some(Err(Error {
+													kind: ErrorKind::SyntaxError,
+													location: LocationArea {
+														start: before,
+														end: self.current,
+													},
+													message: format!("{} is not a valid character", word),
+												})),
+											},
+											Err(_) => return Some(Err(Error {
+												kind: ErrorKind::SyntaxError,
+												location: LocationArea {
+													start: before,
+													end: self.current,
+												},
+												message: format!("{:?} is invalid hex", hex),
+											})),
+										},
+										None => return Some(Err(Error {
+											kind: ErrorKind::SyntaxError,
+											location: self.current.into(),
+											message: "unexpected end whilst parsing escape".into(),
+										})),
+									},
+									'U' =>  match self.eat_n(8) {
+										Some(hex) => match u32::from_str_radix(&hex, 16) {
+											Ok(dword) => match char::from_u32(dword) {
+												Some(uni) => uni,
+												None => return Some(Err(Error {
+													kind: ErrorKind::SyntaxError,
+													location: LocationArea {
+														start: before,
+														end: self.current,
+													},
+													message: format!("{} is not a valid character", dword),
+												})),
+											},
+											Err(_) => return Some(Err(Error {
+												kind: ErrorKind::SyntaxError,
+												location: LocationArea {
+													start: before,
+													end: self.current,
+												},
+												message: format!("{:?} is invalid hex", hex),
+											})),
+										},
+										None => return Some(Err(Error {
+											kind: ErrorKind::SyntaxError,
+											location: self.current.into(),
+											message: "unexpected end whilst parsing escape".into(),
+										})),
+									},
+
+									'n' => '\n',
+									'r' => '\r',
+									't' => '\t',
+
+									'0' => '\0',
+									'\\' => '\\',
+
+									_ => return Some(Err(Error {
+										kind: ErrorKind::SyntaxError,
+										location: LocationArea {
+											start: before,
+											end: self.current,
+										},
+										message: format!("{:?} is not a valid escape", ech),
+									})),
+								});
+							} else {
+								return Some(Err(Error {
+									kind: ErrorKind::SyntaxError,
+									location: self.current.into(),
+									message: "unexpected end whilst parsing escape".into(),
+								}))
+							}
+						} else {
+							string.push(nch);
+						}
+					} else {
+						return Some(Err(Error {
+							kind: ErrorKind::SyntaxError,
+							location: self.current.into(),
+							message: "unterminated string".into(),
+						}))
+					}
+				}
+
+				TokenKind::String(string)
 			},
 
 			ch => return Some(Err(Error {
