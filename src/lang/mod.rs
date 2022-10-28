@@ -4,18 +4,52 @@ pub mod runtime;
 
 use std::io::Read;
 
-pub fn eval(src: &mut impl Read) -> Result<runtime::Value, Error> {
+pub fn eval(src: &mut impl Read) -> Result<Value, Error> {
 	// this is temporary! fix me!
 	let mut buf = String::new();
 	src.read_to_string(&mut buf).unwrap();
 	eval_str(&buf)
 }
 
-pub fn eval_str(src: &str) -> Result<runtime::Value, Error> {
+pub fn eval_str(src: &str) -> Result<Value, Error> {
 	let _lexer = lexer::Lexer::new(&mut src.chars());
 
 	todo!()
 }
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum Value {
+	Number(f32),
+	String(String),
+	Boolean(bool),
+	List(Vec<Self>),
+	Symbol(Symbol),
+}
+
+#[derive(Clone, Debug, PartialEq, Hash)]
+pub struct Symbol(String);
+
+impl Symbol {
+	pub fn new(src: String) -> Option<Self> {
+		if src.len() == 0 || src.chars().next().unwrap().is_ascii_digit() {
+			return None
+		}
+
+		src
+			.chars()
+			.all(|ch| ch.is_ascii_alphanumeric() || ch == '_')
+			.then(|| Self(src))
+	}
+
+	pub fn value(&self) -> &str {
+		&self.0
+	}
+
+	pub fn unwrap(self) -> String {
+		self.0
+	}
+}
+
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub struct Error {

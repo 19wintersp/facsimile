@@ -68,7 +68,7 @@ impl<'a, I: Iterator<Item = char>> Iterator for Lexer<'a, I> {
 					"false" => TokenKind::Boolean(false),
 					"nil" => TokenKind::Nil,
 
-					_ => TokenKind::Symbol(Symbol::new(symbol).unwrap()),
+					_ => TokenKind::Symbol(super::Symbol::new(symbol).unwrap()),
 				}
 			},
 
@@ -148,34 +148,10 @@ pub enum TokenKind {
 	Func,
 	Def,
 
-	Symbol(Symbol),
+	Symbol(super::Symbol),
 
 	Number(f32),
 	String(String),
 	Boolean(bool),
 	Nil,
-}
-
-#[derive(Clone, Debug, PartialEq, Hash)]
-pub struct Symbol(pub(super) String);
-
-impl Symbol {
-	pub fn new(src: String) -> Option<Self> {
-		if src.len() == 0 || src.chars().next().unwrap().is_ascii_digit() {
-			return None
-		}
-
-		src
-			.chars()
-			.all(|ch| ch.is_ascii_alphanumeric() || ch == '_')
-			.then(|| Self(src))
-	}
-
-	pub fn value(&self) -> &str {
-		&self.0
-	}
-
-	pub fn unwrap(self) -> String {
-		self.0
-	}
 }
