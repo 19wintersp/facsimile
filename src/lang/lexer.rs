@@ -1,15 +1,17 @@
+use super::{ Symbol, Error, ErrorKind, LocationArea, LocationPoint };
+
 pub struct Lexer<'a, I: Iterator<Item = char>> {
 	src: std::iter::Peekable<&'a mut I>,
-	location: super::LocationPoint,
-	current: super::LocationPoint,
+	location: LocationPoint,
+	current: LocationPoint,
 }
 
 impl<'a, I: Iterator<Item = char>> Lexer<'a, I> {
 	pub fn new(src: &'a mut I) -> Self {
 		Self {
 			src: src.peekable(),
-			location: super::LocationPoint::default(),
-			current: super::LocationPoint::default(),
+			location: LocationPoint::default(),
+			current: LocationPoint::default(),
 		}
 	}
 
@@ -31,7 +33,7 @@ impl<'a, I: Iterator<Item = char>> Lexer<'a, I> {
 }
 
 impl<'a, I: Iterator<Item = char>> Iterator for Lexer<'a, I> {
-	type Item = Result<Token, super::Error>;
+	type Item = Result<Token, Error>;
 
 	fn next(&mut self) -> Option<Self::Item> {
 		while let Some(ch) = self.src.peek() {
@@ -65,7 +67,7 @@ impl<'a, I: Iterator<Item = char>> Iterator for Lexer<'a, I> {
 					"false" => TokenKind::Boolean(false),
 					"nil" => TokenKind::Nil,
 
-					_ => TokenKind::Symbol(super::Symbol::new(symbol).unwrap()),
+					_ => TokenKind::Symbol(Symbol::new(symbol).unwrap()),
 				}
 			},
 
@@ -78,9 +80,9 @@ impl<'a, I: Iterator<Item = char>> Iterator for Lexer<'a, I> {
 				use std::str::FromStr;
 				TokenKind::Number(match f32::from_str(&number) {
 					Ok(number) => number,
-					Err(_) => return Some(Err(super::Error {
-						kind: super::ErrorKind::SyntaxError,
-						location: super::LocationArea { start, end: self.current },
+					Err(_) => return Some(Err(Error {
+						kind: ErrorKind::SyntaxError,
+						location: LocationArea { start, end: self.current },
 						message: "invalid number literal".into(),
 					})),
 				})
@@ -89,8 +91,8 @@ impl<'a, I: Iterator<Item = char>> Iterator for Lexer<'a, I> {
 				todo!()
 			},
 
-			ch => return Some(Err(super::Error {
-				kind: super::ErrorKind::SyntaxError,
+			ch => return Some(Err(Error {
+				kind: ErrorKind::SyntaxError,
 				location: self.current.into(),
 				message: format!("unexpected {:?}", ch),
 			})),
@@ -110,8 +112,8 @@ impl<'a, I: Iterator<Item = char>> Iterator for Lexer<'a, I> {
 				};
 
 				if !exempt && !ch.is_ascii_whitespace() {
-					return Some(Err(super::Error {
-						kind: super::ErrorKind::SyntaxError,
+					return Some(Err(Error {
+						kind: ErrorKind::SyntaxError,
 						location: self.location.into(),
 						message: "expected delimeter".into(),
 					}))
@@ -121,7 +123,7 @@ impl<'a, I: Iterator<Item = char>> Iterator for Lexer<'a, I> {
 
 		Some(Ok(Token {
 			kind,
-			location: super::LocationArea { start, end: self.current },
+			location: LocationArea { start, end: self.current },
 		}))
 	}
 }
@@ -129,7 +131,7 @@ impl<'a, I: Iterator<Item = char>> Iterator for Lexer<'a, I> {
 #[derive(Clone, Debug, PartialEq)]
 pub struct Token {
 	pub(super) kind: TokenKind,
-	pub location: super::LocationArea,
+	pub location: LocationArea,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -142,7 +144,7 @@ pub enum TokenKind {
 	RightBrace,
 	Dot,
 
-	Symbol(super::Symbol),
+	Symbol(Symbol),
 
 	Number(f32),
 	String(String),
