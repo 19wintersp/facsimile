@@ -2,6 +2,8 @@ pub mod lexer;
 pub mod parser;
 pub mod runtime;
 
+mod stdlib;
+
 use std::io::Read;
 
 pub fn eval(src: &mut impl Read) -> Result<Value, Error> {
@@ -12,7 +14,13 @@ pub fn eval(src: &mut impl Read) -> Result<Value, Error> {
 }
 
 pub fn eval_str(src: &str) -> Result<Value, Error> {
-	let _lexer = lexer::Lexer::new(&mut src.chars());
+	let mut chars = src.chars();
+	let lexer = lexer::Lexer::new(&mut chars);
+
+	//todo
+	let parsed = parser::parse(&mut lexer.map(|res| res.unwrap())).unwrap();
+
+	println!("{:#?}", parsed);
 
 	todo!()
 }
@@ -26,7 +34,7 @@ pub enum Value {
 	Symbol(Symbol),
 }
 
-#[derive(Clone, Debug, PartialEq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Symbol(String);
 
 impl Symbol {
