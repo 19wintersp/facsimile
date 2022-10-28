@@ -3,13 +3,13 @@ use super::lexer::{ Token, TokenKind };
 
 use std::iter::Peekable;
 
-pub fn parser(
+pub fn parse(
 	src: &mut impl Iterator<Item = Token>,
 ) -> Result<Vec<Value>, Error> {
-	parser_impl(&mut src.peekable())
+	parse_impl(&mut src.peekable())
 }
 
-fn parser_impl(
+fn parse_impl(
 	src: &mut Peekable<&mut impl Iterator<Item = Token>>,
 ) -> Result<Vec<Value>, Error> {
 	let mut values = Vec::new();
@@ -23,7 +23,7 @@ fn parser_impl(
 		let token = src.next().unwrap();
 		values.push(match &token.kind {
 			TokenKind::LeftParen => {
-				let list = parser_impl(src)?;
+				let list = parse_impl(src)?;
 				assert_eq!(src.next().unwrap().kind, TokenKind::RightParen);
 				Value::List(list)
 			},
