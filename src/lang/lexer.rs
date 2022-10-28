@@ -112,11 +112,13 @@ impl<'a, I: Iterator<Item = char>> Iterator for Lexer<'a, I> {
 				};
 
 				if !exempt && !ch.is_ascii_whitespace() {
-					return Some(Err(Error {
-						kind: ErrorKind::SyntaxError,
-						location: self.location.into(),
-						message: "expected delimeter".into(),
-					}))
+					if let ')' | ']' | '}' = ch {} else {
+						return Some(Err(Error {
+							kind: ErrorKind::SyntaxError,
+							location: self.location.into(),
+							message: "expected delimeter".into(),
+						}))
+					}
 				}
 			}
 		}
