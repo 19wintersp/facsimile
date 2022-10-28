@@ -61,9 +61,8 @@ impl<'a, I: Iterator<Item = char>> Iterator for Lexer<'a, I> {
 				}
 
 				match symbol.as_str() {
-					"env" => TokenKind::Env,
 					"func" => TokenKind::Func,
-					"let" => TokenKind::Let,
+					"def" => TokenKind::Def,
 
 					"true" => TokenKind::Boolean(true),
 					"false" => TokenKind::Boolean(false),
@@ -146,9 +145,8 @@ pub enum TokenKind {
 	RightBrace,
 	Dot,
 
-	Env,
 	Func,
-	Let,
+	Def,
 
 	Symbol(Symbol),
 
