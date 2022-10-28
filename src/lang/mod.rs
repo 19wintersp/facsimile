@@ -34,6 +34,18 @@ pub enum Value {
 	Symbol(Symbol),
 }
 
+impl Value {
+	pub fn type_name(&self) -> &'static str {
+		match self {
+			Self::Number(_) => "number",
+			Self::String(_) => "string",
+			Self::Boolean(_) => "boolean",
+			Self::List(list) => if list.len() > 0 { "list" } else { "nil" },
+			Self::Symbol(_) => "symbol",
+		}
+	}
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Symbol(String);
 
@@ -57,7 +69,6 @@ impl Symbol {
 		self.0
 	}
 }
-
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub struct Error {
