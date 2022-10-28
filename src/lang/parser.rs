@@ -32,17 +32,17 @@ fn parse_impl(
 
 			TokenKind::LeftBracket | TokenKind::RightBracket => return Err(Error {
 				kind: ErrorKind::SyntaxError,
-				location: token.location,
+				location: Some(token.location),
 				message: "unexpected unimplemented bracket".into(),
 			}),
 			TokenKind::LeftBrace | TokenKind::RightBrace => return Err(Error {
 				kind: ErrorKind::SyntaxError,
-				location: token.location,
+				location: Some(token.location),
 				message: "unexpected unimplemented brace".into(),
 			}),
 			TokenKind::Dot => return Err(Error {
 				kind: ErrorKind::SyntaxError,
-				location: token.location,
+				location: Some(token.location),
 				message: "unexpected unimplemented path delimeter".into(),
 			}),
 

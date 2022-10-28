@@ -62,7 +62,7 @@ impl Symbol {
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub struct Error {
 	pub kind: ErrorKind,
-	pub location: LocationArea,
+	pub location: Option<LocationArea>,
 	pub message: String,
 }
 

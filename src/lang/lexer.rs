@@ -92,7 +92,7 @@ impl<'a, I: Iterator<Item = char>> Iterator for Lexer<'a, I> {
 					Ok(number) => number,
 					Err(_) => return Some(Err(Error {
 						kind: ErrorKind::SyntaxError,
-						location: LocationArea { start, end: self.current },
+						location: Some(LocationArea { start, end: self.current }),
 						message: "invalid number literal".into(),
 					})),
 				})
@@ -112,16 +112,16 @@ impl<'a, I: Iterator<Item = char>> Iterator for Lexer<'a, I> {
 											Ok(octet) => octet as char,
 											Err(_) => return Some(Err(Error {
 												kind: ErrorKind::SyntaxError,
-												location: LocationArea {
+												location: Some(LocationArea {
 													start: before,
 													end: self.current,
-												},
+												}),
 												message: format!("{:?} is invalid hex", hex),
 											})),
 										},
 										None => return Some(Err(Error {
 											kind: ErrorKind::SyntaxError,
-											location: self.current.into(),
+											location: Some(self.current.into()),
 											message: "unexpected end whilst parsing escape".into(),
 										})),
 									},
@@ -131,25 +131,25 @@ impl<'a, I: Iterator<Item = char>> Iterator for Lexer<'a, I> {
 												Some(uni) => uni,
 												None => return Some(Err(Error {
 													kind: ErrorKind::SyntaxError,
-													location: LocationArea {
+													location: Some(LocationArea {
 														start: before,
 														end: self.current,
-													},
+													}),
 													message: format!("{} is not a valid character", word),
 												})),
 											},
 											Err(_) => return Some(Err(Error {
 												kind: ErrorKind::SyntaxError,
-												location: LocationArea {
+												location: Some(LocationArea {
 													start: before,
 													end: self.current,
-												},
+												}),
 												message: format!("{:?} is invalid hex", hex),
 											})),
 										},
 										None => return Some(Err(Error {
 											kind: ErrorKind::SyntaxError,
-											location: self.current.into(),
+											location: Some(self.current.into()),
 											message: "unexpected end whilst parsing escape".into(),
 										})),
 									},
@@ -159,25 +159,25 @@ impl<'a, I: Iterator<Item = char>> Iterator for Lexer<'a, I> {
 												Some(uni) => uni,
 												None => return Some(Err(Error {
 													kind: ErrorKind::SyntaxError,
-													location: LocationArea {
+													location: Some(LocationArea {
 														start: before,
 														end: self.current,
-													},
+													}),
 													message: format!("{} is not a valid character", dword),
 												})),
 											},
 											Err(_) => return Some(Err(Error {
 												kind: ErrorKind::SyntaxError,
-												location: LocationArea {
+												location: Some(LocationArea {
 													start: before,
 													end: self.current,
-												},
+												}),
 												message: format!("{:?} is invalid hex", hex),
 											})),
 										},
 										None => return Some(Err(Error {
 											kind: ErrorKind::SyntaxError,
-											location: self.current.into(),
+											location: Some(self.current.into()),
 											message: "unexpected end whilst parsing escape".into(),
 										})),
 									},
@@ -191,17 +191,17 @@ impl<'a, I: Iterator<Item = char>> Iterator for Lexer<'a, I> {
 
 									_ => return Some(Err(Error {
 										kind: ErrorKind::SyntaxError,
-										location: LocationArea {
+										location: Some(LocationArea {
 											start: before,
 											end: self.current,
-										},
+										}),
 										message: format!("{:?} is not a valid escape", ech),
 									})),
 								});
 							} else {
 								return Some(Err(Error {
 									kind: ErrorKind::SyntaxError,
-									location: self.current.into(),
+									location: Some(self.current.into()),
 									message: "unexpected end whilst parsing escape".into(),
 								}))
 							}
@@ -211,7 +211,7 @@ impl<'a, I: Iterator<Item = char>> Iterator for Lexer<'a, I> {
 					} else {
 						return Some(Err(Error {
 							kind: ErrorKind::SyntaxError,
-							location: self.current.into(),
+							location: Some(self.current.into()),
 							message: "unterminated string".into(),
 						}))
 					}
@@ -222,7 +222,7 @@ impl<'a, I: Iterator<Item = char>> Iterator for Lexer<'a, I> {
 
 			ch => return Some(Err(Error {
 				kind: ErrorKind::SyntaxError,
-				location: self.current.into(),
+				location: Some(self.current.into()),
 				message: format!("unexpected {:?}", ch),
 			})),
 		};
@@ -244,7 +244,7 @@ impl<'a, I: Iterator<Item = char>> Iterator for Lexer<'a, I> {
 					if let ')' | ']' | '}' = ch {} else {
 						return Some(Err(Error {
 							kind: ErrorKind::SyntaxError,
-							location: self.location.into(),
+							location: Some(self.location.into()),
 							message: "expected delimeter".into(),
 						}))
 					}
