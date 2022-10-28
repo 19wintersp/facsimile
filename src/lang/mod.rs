@@ -69,6 +69,11 @@ pub struct Error {
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub enum ErrorKind {
 	SyntaxError,
+	NameError,
+	ArgumentError,
+	TypeError,
+	RangeError,
+	FormatError,
 	IoError,
 }
 
