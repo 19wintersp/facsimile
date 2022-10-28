@@ -1,5 +1,5 @@
 [package]
-name = "lisp-like"
+name = "facsimile"
 version = "0.1.0"
 edition = "2021"
 
@@ -10,5 +10,5 @@ maplit = "1.0"
 path = "src/lib.rs"
 
 [[bin]]
-name = "lisp-like"
+name = "facsimile"
 path = "src/main.rs"
