@@ -73,6 +73,8 @@ pub fn run(value: Value, env: &mut Environment) -> Result<Value, Error> {
 				},
 				_ => match env.functions.get(&symbol) {
 					Some(Function::Native { args, body }) => {
+						let (args, body) = (args.clone(), body.clone());
+
 						if items.len() - 1 != args.len() {
 							return Err(Error {
 								kind: ErrorKind::ArgumentError,
@@ -88,7 +90,7 @@ pub fn run(value: Value, env: &mut Environment) -> Result<Value, Error> {
 						let mut i = 0;
 						for arg in args {
 							i += 1;
-							new_locals.insert(arg.clone(), items[i].clone());
+							new_locals.insert(arg.clone(), run(items[i].clone(), env)?);
 						}
 
 						let mut new_env = Environment {
@@ -103,7 +105,12 @@ pub fn run(value: Value, env: &mut Environment) -> Result<Value, Error> {
 
 						Ok(last.unwrap())
 					},
-					Some(Function::Provided(fun)) => fun(&items[1..]),
+					Some(Function::Provided(fun)) => (*fun)(
+						&items[1..]
+							.iter()
+							.map(|item| run(item.clone(), env))
+							.collect::<Result<Vec<_>, _>>()?
+					),
 					None => Err(Error {
 						kind: ErrorKind::NameError,
 						location: None, // todo
