@@ -49,6 +49,10 @@ pub enum Value {
 }
 
 impl Value {
+	pub fn nil() -> Self {
+		Self::List(Vec::new())
+	}
+
 	pub fn type_name(&self) -> &'static str {
 		match self {
 			Self::Number(_) => "number",
@@ -57,6 +61,22 @@ impl Value {
 			Self::List(list) => if list.len() > 0 { "list" } else { "nil" },
 			Self::Symbol(_) => "symbol",
 		}
+	}
+
+	pub fn truthy(&self) -> bool {
+		match self {
+			Self::Number(number) => *number != 0f32,
+			Self::String(string) => string.len() > 0,
+			Self::Boolean(boolean) => *boolean,
+			Self::List(list) => list.len() > 0,
+			Self::Symbol(_) => true,
+		}
+	}
+}
+
+impl Default for Value {
+	fn default() -> Self {
+		Self::nil()
 	}
 }
 
