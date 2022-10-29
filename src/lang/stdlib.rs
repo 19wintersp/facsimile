@@ -14,7 +14,10 @@ pub fn index() -> HashMap<Symbol, Function> {
 		};
 	}
 
-	fns![not, eq, ne, add, sub, mul, div, get, num, cat, print, input]
+	fns![
+		not, eq, ne, lt, gt, lte, gte, add, sub, mul, div, rem, get, num, cat,
+		print, input,
+	]
 }
 
 fn not(args: &[Value]) -> Result<Value, Error> {
@@ -60,6 +63,114 @@ fn ne(args: &[Value]) -> Result<Value, Error> {
 	}
 
 	Ok(Value::Boolean(true))
+}
+
+fn lt(args: &[Value]) -> Result<Value, Error> {
+	if args.len() != 2 {
+		return Err(Error {
+			kind: ErrorKind::ArgumentError,
+			location: None,
+			message: "lt requires two arguments".into(),
+		})
+	}
+
+	let type_error = Err(Error {
+		kind: ErrorKind::TypeError,
+		location: None,
+		message: "lt only takes numbers".into(),
+	});
+
+	Ok(Value::Boolean(
+		match args[0] {
+			Value::Number(number) => number,
+			_ => return type_error,
+		} <
+		match args[1] {
+			Value::Number(number) => number,
+			_ => return type_error,
+		}
+	))
+}
+
+fn gt(args: &[Value]) -> Result<Value, Error> {
+	if args.len() != 2 {
+		return Err(Error {
+			kind: ErrorKind::ArgumentError,
+			location: None,
+			message: "gt requires two arguments".into(),
+		})
+	}
+
+	let type_error = Err(Error {
+		kind: ErrorKind::TypeError,
+		location: None,
+		message: "gt only takes numbers".into(),
+	});
+
+	Ok(Value::Boolean(
+		match args[0] {
+			Value::Number(number) => number,
+			_ => return type_error,
+		} >
+		match args[1] {
+			Value::Number(number) => number,
+			_ => return type_error,
+		}
+	))
+}
+
+fn lte(args: &[Value]) -> Result<Value, Error> {
+	if args.len() != 2 {
+		return Err(Error {
+			kind: ErrorKind::ArgumentError,
+			location: None,
+			message: "lte requires two arguments".into(),
+		})
+	}
+
+	let type_error = Err(Error {
+		kind: ErrorKind::TypeError,
+		location: None,
+		message: "lte only takes numbers".into(),
+	});
+
+	Ok(Value::Boolean(
+		match args[0] {
+			Value::Number(number) => number,
+			_ => return type_error,
+		} <=
+		match args[1] {
+			Value::Number(number) => number,
+			_ => return type_error,
+		}
+	))
+}
+
+fn gte(args: &[Value]) -> Result<Value, Error> {
+	if args.len() != 2 {
+		return Err(Error {
+			kind: ErrorKind::ArgumentError,
+			location: None,
+			message: "gte requires two arguments".into(),
+		})
+	}
+
+	let type_error = Err(Error {
+		kind: ErrorKind::TypeError,
+		location: None,
+		message: "gte only takes numbers".into(),
+	});
+
+	Ok(Value::Boolean(
+		match args[0] {
+			Value::Number(number) => number,
+			_ => return type_error,
+		} >=
+		match args[1] {
+			Value::Number(number) => number,
+			_ => return type_error,
+		}
+	))
 }
 
 fn add(args: &[Value]) -> Result<Value, Error> {
@@ -188,6 +299,42 @@ fn div(args: &[Value]) -> Result<Value, Error> {
 			Value::Number(number) => number,
 			_ => unreachable!(),
 		} /
+		args[1..]
+			.iter()
+			.map(|item| match item {
+				Value::Number(number) => number,
+				_ => unreachable!(),
+			})
+			.product::<f32>()
+	))
+}
+
+fn rem(args: &[Value]) -> Result<Value, Error> {
+	if args.len() < 2 {
+		return Err(Error {
+			kind: ErrorKind::ArgumentError,
+			location: None,
+			message: "rem requires at least two arguments".into(),
+		})
+	}
+
+	if
+		args
+			.iter()
+			.any(|item| if let Value::Number(_) = item { false } else { true })
+	{
+		return Err(Error {
+			kind: ErrorKind::TypeError,
+			location: None,
+			message: "rem only takes numbers".into(),
+		})
+	}
+
+	Ok(Value::Number(
+		match args[0] {
+			Value::Number(number) => number,
+			_ => unreachable!(),
+		} %
 		args[1..]
 			.iter()
 			.map(|item| match item {
