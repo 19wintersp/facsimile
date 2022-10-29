@@ -99,6 +99,7 @@ impl Symbol {
 		&self.0
 	}
 
+	#[allow(unused)]
 	pub fn unwrap(self) -> String {
 		self.0
 	}
