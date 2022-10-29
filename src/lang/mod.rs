@@ -4,32 +4,132 @@ pub mod runtime;
 
 mod stdlib;
 
-use std::io::Read;
+use std::io::{ Bytes, Read };
 
 pub fn eval(
-	src: &mut impl Read,
-	env: Option<&mut runtime::Environment>,
-) -> Result<Value, Error> {
-	// this is temporary! fix me!
-	let mut buf = String::new();
-	src.read_to_string(&mut buf).unwrap();
-	eval_str(&buf, env)
-}
-
-pub fn eval_str(
 	src: &str,
 	env: Option<&mut runtime::Environment>,
 ) -> Result<Value, Error> {
-	let mut blank = Default::default();
+	let mut blank = runtime::Environment::default();
 	let env = env.unwrap_or(&mut blank);
-
 	env.functions.extend(stdlib::index().into_iter());
 
 	let mut chars = src.chars();
 	let lexer = lexer::Lexer::new(&mut chars);
 
-	// todo: fix error handling here
-	let parsed = parser::parse(&mut lexer.map(|res| res.unwrap())).unwrap();
+	let mut lexer_error = None;
+	let result = parser::parse(
+		&mut lexer.map_while(|result| match result {
+			Ok(token) => Some(token),
+			Err(error) => {
+				lexer_error = Some(error);
+				None
+			},
+		}),
+	);
+
+	if let Some(error) = lexer_error {
+		return Err(error)
+	}
+
+	let parsed = result?;
+
+	let mut last = None;
+	for value in parsed {
+		last = Some(runtime::run(value, env)?);
+	}
+
+	Ok(last.unwrap_or(Value::nil()))
+}
+
+pub fn eval_read(
+	src: &mut impl Read,
+	env: Option<&mut runtime::Environment>,
+) -> Result<Value, Error> {
+	let mut blank = runtime::Environment::default();
+	let env = env.unwrap_or(&mut blank);
+	env.functions.extend(stdlib::index().into_iter());
+
+	struct Utf8Decoder<R> {
+		bytes: Bytes<R>,
+		buffer: [u8; 4],
+		bailed: bool,
+	}
+
+	impl<R: Read> Iterator for Utf8Decoder<R> {
+		type Item = Result<char, String>;
+
+		fn next(&mut self) -> Option<Self::Item> {
+			if self.bailed {
+				return None
+			}
+
+			for i in 0..4 {
+				match self.bytes.next() {
+					Some(Ok(byte)) => self.buffer[i] = byte,
+					Some(Err(error)) => {
+						self.bailed = true;
+						return Some(Err(error.to_string()))
+					},
+					None => if i == 0 {
+						return None
+					} else {
+						self.bailed = true;
+						return Some(Err("unterminated utf-8 sequence".into()))
+					},
+				}
+
+				if let Ok(ch) = std::str::from_utf8(&self.buffer[..i + 1]) {
+					return Some(Ok(ch.chars().next().unwrap()))
+				}
+			}
+
+			self.bailed = true;
+			Some(Err("utf-8 error".into()))
+		}
+	}
+
+	let decoder = Utf8Decoder {
+		bytes: src.bytes(),
+		buffer: [0; 4],
+		bailed: false,
+	};
+
+	let mut decoder_error = None;
+	let mut mw = decoder.map_while(|result| match result {
+		Ok(ch) => Some(ch),
+		Err(error) => {
+			decoder_error = Some(error);
+			None
+		},
+	});
+
+	let lexer = lexer::Lexer::new(&mut mw);
+
+	let mut lexer_error = None;
+	let result = parser::parse(
+		&mut lexer.map_while(|result| match result {
+			Ok(token) => Some(token),
+			Err(error) => {
+				lexer_error = Some(error);
+				None
+			},
+		}),
+	);
+
+	if let Some(error) = decoder_error {
+		return Err(Error {
+			kind: ErrorKind::IoError,
+			location: None,
+			message: error,
+		})
+	}
+
+	if let Some(error) = lexer_error {
+		return Err(error)
+	}
+
+	let parsed = result?;
 
 	let mut last = None;
 	for value in parsed {
