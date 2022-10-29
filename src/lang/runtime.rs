@@ -9,7 +9,11 @@ pub fn run(value: Value, env: &mut Environment) -> Result<Value, Error> {
 	match value {
 		Value::List(items) => match &items[0] {
 			Value::Symbol(symbol @ Symbol(name)) => match name.as_str() {
-				"quote" => Ok(Value::List(items[1..].to_vec())),
+				"quote" => Ok(if items.len() > 2 {
+					Value::List(items[1..].to_vec())
+				} else {
+					items[1].clone()
+				}),
 				"fun" | "def" => {
 					let basis = if name.as_str() == "fun" { 0 } else { 1 };
 
