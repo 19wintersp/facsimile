@@ -6,6 +6,7 @@ mod stdlib;
 
 use std::io::{ Bytes, Read };
 
+#[allow(unused)]
 pub fn eval(
 	src: &str,
 	env: Option<&mut runtime::Environment>,
