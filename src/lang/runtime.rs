@@ -45,29 +45,31 @@ pub fn run(value: Value, env: &mut Environment) -> Result<Value, Error> {
 						})
 						.collect::<Vec<_>>();
 
+					let symbol = if name.as_str() == "fun" {
+						Symbol(format!(
+							"%{}",
+							LAMBDA_COUNTER.fetch_add(1, Ordering::SeqCst),
+						))
+					} else {
+						match &items[1] {
+							Value::Symbol(symbol) => symbol.clone(),
+							_ => return Err(Error {
+								kind: ErrorKind::ArgumentError,
+								location: None, // todo
+								message: "expected symbol to identify definition".into(),
+							}),
+						}
+					};
+
 					env.functions.insert(
-						if name.as_str() == "fun" {
-							Symbol(format!(
-								"%{}",
-								LAMBDA_COUNTER.fetch_add(1, Ordering::SeqCst),
-							))
-						} else {
-							match &items[1] {
-								Value::Symbol(symbol) => symbol.clone(),
-								_ => return Err(Error {
-									kind: ErrorKind::ArgumentError,
-									location: None, // todo
-									message: "expected symbol to identify definition".into(),
-								}),
-							}
-						},
+						symbol.clone(),
 						Function::Native {
 							args,
 							body: items[basis + 2..].to_vec(),
 						},
 					);
 
-					todo!()
+					Ok(Value::Symbol(symbol))
 				},
 				_ => match env.functions.get(&symbol) {
 					Some(Function::Native { args, body }) => {
