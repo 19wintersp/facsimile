@@ -14,7 +14,19 @@ pub fn index() -> HashMap<Symbol, Function> {
 		};
 	}
 
-	fns![eq, ne, add, sub, mul, div, get, num, cat, print, input]
+	fns![not, eq, ne, add, sub, mul, div, get, num, cat, print, input]
+}
+
+fn not(args: &[Value]) -> Result<Value, Error> {
+	if args.len() != 1 {
+		return Err(Error {
+			kind: ErrorKind::ArgumentError,
+			location: None,
+			message: "not requires one argument".into(),
+		})
+	}
+
+	Ok(Value::Boolean(!args[0].truthy()))
 }
 
 fn eq(args: &[Value]) -> Result<Value, Error> {
