@@ -6,23 +6,37 @@ mod stdlib;
 
 use std::io::Read;
 
-pub fn eval(src: &mut impl Read) -> Result<Value, Error> {
+pub fn eval(
+	src: &mut impl Read,
+	env: Option<&mut runtime::Environment>,
+) -> Result<Value, Error> {
 	// this is temporary! fix me!
 	let mut buf = String::new();
 	src.read_to_string(&mut buf).unwrap();
-	eval_str(&buf)
+	eval_str(&buf, env)
 }
 
-pub fn eval_str(src: &str) -> Result<Value, Error> {
+pub fn eval_str(
+	src: &str,
+	env: Option<&mut runtime::Environment>,
+) -> Result<Value, Error> {
+	let mut blank = Default::default();
+	let env = env.unwrap_or(&mut blank);
+
+	env.functions.extend(stdlib::index().into_iter());
+
 	let mut chars = src.chars();
 	let lexer = lexer::Lexer::new(&mut chars);
 
-	//todo
+	// todo: fix error handling here
 	let parsed = parser::parse(&mut lexer.map(|res| res.unwrap())).unwrap();
 
-	println!("{:#?}", parsed);
+	let mut last = None;
+	for value in parsed {
+		last = Some(runtime::run(value, env)?);
+	}
 
-	todo!()
+	Ok(last.unwrap_or(Value::nil()))
 }
 
 #[derive(Clone, Debug, PartialEq)]
