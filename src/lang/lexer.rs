@@ -220,11 +220,46 @@ impl<'a, I: Iterator<Item = char>> Iterator for Lexer<'a, I> {
 				TokenKind::String(string)
 			},
 
-			ch => return Some(Err(Error {
-				kind: ErrorKind::SyntaxError,
-				location: Some(self.current.into()),
-				message: format!("unexpected {:?}", ch),
-			})),
+			ch => {
+				if ch == '/' {
+					if let Some('/' | '*') = self.src.peek() {
+						if self.eat().unwrap() == '/' {
+							loop {
+								match self.eat() {
+									Some('\n') => break,
+									Some(_) => continue,
+									None => return None,
+								}
+							}
+						} else {
+							let mut expect_end = false;
+							loop {
+								match self.eat() {
+									Some('*') => { expect_end = true; continue },
+									Some('/') => if expect_end { break },
+									Some(_) => (),
+									None => return Some(Err(Error {
+										kind: ErrorKind::SyntaxError,
+										location: Some(self.current.into()),
+										message: "unterminated comment".into(),
+									})),
+								}
+
+								expect_end = false;
+							}
+						}
+
+						// this is stupid
+						return self.next()
+					}
+				}
+
+				return Some(Err(Error {
+					kind: ErrorKind::SyntaxError,
+					location: Some(self.current.into()),
+					message: format!("unexpected {:?}", ch),
+				}))
+			},
 		};
 
 		if
