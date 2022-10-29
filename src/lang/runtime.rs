@@ -7,13 +7,72 @@ static LAMBDA_COUNTER: AtomicUsize = AtomicUsize::new(0);
 
 pub fn run(value: Value, env: &mut Environment) -> Result<Value, Error> {
 	match value {
-		Value::List(items) => match &items[0] {
+		Value::List(mut items) => match &items[0] {
 			Value::Symbol(symbol @ Symbol(name)) => match name.as_str() {
 				"quote" => Ok(if items.len() > 2 {
 					Value::List(items[1..].to_vec())
 				} else {
 					items[1].clone()
 				}),
+				"block" => {
+					let mut last = None;
+					for item in items[1..].to_vec() {
+						last = Some(run(item, env)?);
+					}
+
+					Ok(last.unwrap_or(Value::nil()))
+				},
+				"if" => {
+					if items.len() < 3 {
+						return Err(Error {
+							kind: ErrorKind::ArgumentError,
+							location: None, // todo
+							message: "if requires at least one branch".into(),
+						})
+					}
+
+					let conditional_branches = (items.len() - 1) / 2;
+					let mut selected = None;
+					for i in 0..conditional_branches {
+						if run(std::mem::take(&mut items[i * 2 + 1]), env)?.truthy() {
+							selected = Some(i);
+							break
+						}
+					}
+
+					if let Some(i) = selected {
+						run(std::mem::take(&mut items[i * 2 + 2]), env)
+					} else {
+						if items.len() % 2 == 0 {
+							let items_len = items.len();
+							run(std::mem::take(&mut items[items_len - 1]), env)
+						} else {
+							Ok(Value::nil())
+						}
+					}
+				},
+				"and" | "all" => {
+					let mut nil = Value::nil();
+					for item in items[1..].to_vec() {
+						nil = run(item, env)?;
+						if !nil.truthy() {
+							break
+						}
+					}
+
+					Ok(nil)
+				},
+				"or" | "any" => {
+					let mut non_nil = Value::nil();
+					for item in items[1..].to_vec() {
+						non_nil = run(item, env)?;
+						if non_nil.truthy() {
+							break
+						}
+					}
+
+					Ok(non_nil)
+				},
 				"fun" | "def" => {
 					let basis = if name.as_str() == "fun" { 0 } else { 1 };
 
