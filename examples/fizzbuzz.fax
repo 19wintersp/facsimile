@@ -1,0 +1,17 @@
+(def fizzbuzz (current max)
+	(if (and (rem current 3) (rem current 5))
+		(print current)
+		(print
+			(if (eq 0 (rem current 3)) "Fizz" "")
+			(if (eq 0 (rem current 5)) "Buzz" "")
+		)
+	)
+	(if (lt current max)
+		(fizzbuzz (add current 1) max)
+	)
+)
+
+(if (and (eq (num args) 2) (num (get args 1)))
+	(fizzbuzz 1 (num (get args 1)))
+	(fizzbuzz 1 100)
+)

@@ -1,0 +1,22 @@
+(def factorial (n)
+	(if (eq n 0)
+		1
+		(mul
+			n
+			(factorial (sub n 1))
+		)
+	)
+)
+
+(if (ne (num args) 2)
+	(print "Provide a number \U0001f440")
+	(print
+		"Factorial of "
+		(get args 1)
+		" is "
+		(factorial
+			(num (get args 1))
+		)
+		" \U0001f44c"
+	)
+)
