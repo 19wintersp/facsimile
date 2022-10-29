@@ -6,8 +6,8 @@ use std::sync::atomic::{ AtomicUsize, Ordering };
 static LAMBDA_COUNTER: AtomicUsize = AtomicUsize::new(0);
 
 pub fn run(value: Value, env: &mut Environment) -> Result<Value, Error> {
-	if let Value::List(items) = value {
-		match &items[0] {
+	match value {
+		Value::List(items) => match &items[0] {
 			Value::Symbol(symbol @ Symbol(name)) => match name.as_str() {
 				"quote" => Ok(Value::List(items[1..].to_vec())),
 				"fun" | "def" => {
@@ -123,9 +123,21 @@ pub fn run(value: Value, env: &mut Environment) -> Result<Value, Error> {
 				location: None, // todo
 				message: format!("{} is not callable (use quote)", other.type_name())
 			}),
+		},
+		Value::Symbol(symbol) => {
+			if let Some(local) = env.locals.get(&symbol) {
+				Ok(local.clone())
+			} else if let Some(global) = env.symbols.get(&symbol) {
+				Ok(global.clone())
+			} else {
+				Err(Error {
+					kind: ErrorKind::NameError,
+					location: None, // todo
+					message: format!("symbol {:?} not found (use quote)", symbol.value()),
+				})
+			}
 		}
-	} else {
-		Ok(value)
+		_ => Ok(value),
 	}
 }
 
