@@ -372,7 +372,7 @@ fn get(args: &[Value]) -> Result<Value, Error> {
 		}),
 	};
 
-	Ok(list[index].clone())
+	Ok(list.get(index).cloned().unwrap_or(Value::nil()))
 }
 
 fn num(args: &[Value]) -> Result<Value, Error> {

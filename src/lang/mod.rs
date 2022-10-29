@@ -117,8 +117,6 @@ pub enum ErrorKind {
 	NameError,
 	ArgumentError,
 	TypeError,
-	RangeError,
-	FormatError,
 	IoError,
 }
 
