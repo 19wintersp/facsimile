@@ -4,6 +4,7 @@ pub mod runtime;
 
 mod stdlib;
 
+use std::hash::{ Hash, Hasher };
 use std::io::{ Bytes, Read };
 
 #[allow(unused)]
@@ -178,6 +179,20 @@ impl Value {
 impl Default for Value {
 	fn default() -> Self {
 		Self::nil()
+	}
+}
+
+impl Hash for Value {
+	fn hash<H: Hasher>(&self, hasher: &mut H) {
+		std::mem::discriminant(self).hash(hasher);
+
+		match self {
+			Self::Number(number) => number.to_bits().hash(hasher),
+			Self::String(string) => string.hash(hasher),
+			Self::Boolean(boolean) => boolean.hash(hasher),
+			Self::List(list) => list.hash(hasher),
+			Self::Symbol(symbol) => symbol.hash(hasher),
+		}
 	}
 }
 
