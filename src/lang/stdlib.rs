@@ -346,33 +346,109 @@ fn rem(args: &[Value]) -> Result<Value, Error> {
 }
 
 fn get(args: &[Value]) -> Result<Value, Error> {
-	if args.len() != 2 {
+	if (2..=4).contains(&args.len()) {
 		return Err(Error {
 			kind: ErrorKind::ArgumentError,
 			location: None,
-			message: "get requires two arguments".into(),
+			message: "get requires 2-4 arguments".into(),
 		})
 	}
 
-	let list = match &args[0] {
-		Value::List(list) => list,
+	let (list, is_string) = match &args[0] {
+		Value::List(list) => (list.clone(), false),
+		Value::String(string) => (
+			string.chars()
+				.map(|ch| Value::String(ch.to_string()))
+				.collect::<Vec<_>>(),
+			true,
+		),
 		_ => return Err(Error {
 			kind: ErrorKind::TypeError,
 			location: None,
-			message: "get expects a list".into(),
+			message: "get expects a list or string".into(),
 		}),
 	};
 
-	let index = match args[1] {
-		Value::Number(number) => number.round() as usize,
-		_ => return Err(Error {
-			kind: ErrorKind::TypeError,
+	let indices = args[1..].iter()
+		.map(|arg| match arg {
+			Value::Number(number) => Ok(number.round() as isize),
+			_ => Err(Error {
+				kind: ErrorKind::TypeError,
+				location: None,
+				message: "get expects numerical indices".into(),
+			}),
+		})
+		.collect::<Result<Vec<_>, _>>()?;
+
+	let start = indices[0];
+	let end = indices.get(1).to_owned();
+	let step = *indices.get(2).unwrap_or(&1);
+
+	if step == 0 {
+		return Err(Error {
+			kind: ErrorKind::ArgumentError,
 			location: None,
-			message: "get expects a number index".into(),
-		}),
+			message: "step cannot be zero".into(),
+		})
+	}
+
+	let end = match end {
+		Some(end) => *end,
+		None => if step > 0 {
+			list.len() as isize
+		} else {
+			-1
+		},
 	};
 
-	Ok(list.get(index).cloned().unwrap_or(Value::nil()))
+	if end == start {
+		return if is_string {
+			Ok(Value::String("".into()))
+		} else {
+			Ok(Value::List(Vec::new()))
+		}
+	}
+
+	if step.signum() != (end - start).signum() {
+		return Err(Error {
+			kind: ErrorKind::ArgumentError,
+			location: None,
+			message: "step does not match indices".into(),
+		})
+	}
+
+	let mut output = Vec::new();
+	let mut i = start;
+
+	while (step > 0 && i < end) || (step < 0 && i > end) {
+		if i >= 0 {
+			output.push(
+				list.get(i as usize)
+					.cloned()
+					.unwrap_or(Value::nil())
+			);
+		} else {
+			output.push(Value::nil());
+		}
+
+		i += step;
+	}
+
+	Ok(if is_string {
+		Value::String(
+			output.into_iter()
+				.map(|s| match s {
+					Value::String(s) => s,
+					_ => unreachable!(),
+				})
+				.collect::<Vec<_>>()
+				.concat()
+		)
+	} else if output.len() == 1 && args.len() == 2 {
+		std::mem::take(&mut output[0])
+	} else {
+		Value::List(output)
+	})
 }
 
 fn num(args: &[Value]) -> Result<Value, Error> {
