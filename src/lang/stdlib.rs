@@ -16,7 +16,7 @@ pub fn index() -> HashMap<Symbol, Function> {
 
 	fns![
 		not, eq, ne, lt, gt, lte, gte, add, sub, mul, div, rem, get, num, cat,
-		print, input,
+		print, input, time,
 	]
 }
 
@@ -524,4 +524,23 @@ fn input(args: &[Value]) -> Result<Value, Error> {
 	if buf.ends_with('\r') { buf.pop(); }
 
 	Ok(Value::String(buf))
+}
+
+fn time(args: &[Value]) -> Result<Value, Error> {
+	use std::time::{ SystemTime, UNIX_EPOCH };
+
+	if args.len() > 0 {
+		return Err(Error {
+			kind: ErrorKind::ArgumentError,
+			location: None,
+			message: "time takes no arguments".into(),
+		})
+	}
+
+	Ok(
+		SystemTime::now()
+			.duration_since(UNIX_EPOCH)
+			.map(|d| Value::Number(d.as_secs_f32()))
+			.unwrap_or_default()
+	)
 }
