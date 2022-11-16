@@ -131,6 +131,8 @@ following functions:
 - `cat`
 - `print`
 - `input`
+- `srand`
+- `rand`
 
 The standard CLI also passes a special variable, `args`, which is a list of
 strings containing the path of the entrypoint source file followed by any other
