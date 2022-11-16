@@ -16,7 +16,7 @@ pub fn index() -> HashMap<Symbol, Function> {
 
 	fns![
 		not, eq, ne, lt, gt, lte, gte, add, sub, mul, div, rem, get, num, cat,
-		print, input, time,
+		print, input, time, srand, rand,
 	]
 }
 
@@ -543,4 +543,54 @@ fn time(args: &[Value]) -> Result<Value, Error> {
 			.map(|d| Value::Number(d.as_secs_f32()))
 			.unwrap_or_default()
 	)
+}
+
+use std::sync::atomic::{ AtomicU64, Ordering };
+
+static RAND_SEED: AtomicU64 = AtomicU64::new(1);
+
+fn srand(args: &[Value]) -> Result<Value, Error> {
+	use std::collections::hash_map::DefaultHasher;
+	use std::hash::{ Hash, Hasher };
+
+	if args.len() != 1 {
+		return Err(Error {
+			kind: ErrorKind::ArgumentError,
+			location: None,
+			message: "srand requires one argument".into(),
+		})
+	}
+
+	let mut hasher = DefaultHasher::new();
+	args[0].hash(&mut hasher);
+	RAND_SEED.store(hasher.finish(), Ordering::SeqCst);
+
+	Ok(Value::nil())
+}
+
+fn rand(args: &[Value]) -> Result<Value, Error> {
+	if args.len() > 0 {
+		return Err(Error {
+			kind: ErrorKind::ArgumentError,
+			location: None,
+			message: "rand takes no arguments".into(),
+		})
+	}
+
+	let mut new_value = 0u64;
+
+	RAND_SEED.fetch_update(
+		Ordering::SeqCst,
+		Ordering::SeqCst,
+		|seed| {
+			// values from glibc posix
+			const MULTIPLIER: u64 = 25214903917;
+			const INCREMENT: u64 = 11;
+
+			new_value = seed.overflowing_mul(MULTIPLIER).0.overflowing_add(11).0;
+			Some(new_value)
+		},
+	).unwrap();
+
+	Ok(Value::Number((new_value & u32::MAX as u64) as f32))
 }
