@@ -501,6 +501,27 @@ fn print(args: &[Value]) -> Result<Value, Error> {
 	Ok(Value::nil())
 }
 
-fn input(_args: &[Value]) -> Result<Value, Error> {
-	todo!()
+fn input(args: &[Value]) -> Result<Value, Error> {
+	if args.len() > 0 {
+		return Err(Error {
+			kind: ErrorKind::ArgumentError,
+			location: None,
+			message: "input takes no arguments".into(),
+		})
+	}
+
+	let mut buf = String::new();
+
+	if let Err(err) = std::io::stdin().read_line(&mut buf) {
+		return Err(Error {
+			kind: ErrorKind::IoError,
+			location: None,
+			message: err.to_string(),
+		})
+	}
+
+	if buf.ends_with('\n') { buf.pop(); }
+	if buf.ends_with('\r') { buf.pop(); }
+
+	Ok(Value::String(buf))
 }
