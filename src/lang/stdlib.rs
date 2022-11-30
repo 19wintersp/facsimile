@@ -394,11 +394,15 @@ fn get(args: &[Value]) -> Result<Value, Error> {
 
 	let end = match end {
 		Some(end) => *end,
+		/*
+		todo: find better syntax for unbounded indexing
 		None => if step > 0 {
 			list.len() as isize
 		} else {
 			-1
 		},
+		*/
+		None => start + step.signum(),
 	};
 
 	if end == start {
