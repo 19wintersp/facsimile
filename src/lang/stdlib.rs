@@ -346,7 +346,7 @@ fn rem(args: &[Value]) -> Result<Value, Error> {
 }
 
 fn get(args: &[Value]) -> Result<Value, Error> {
-	if (2..=4).contains(&args.len()) {
+	if !(2..=4).contains(&args.len()) {
 		return Err(Error {
 			kind: ErrorKind::ArgumentError,
 			location: None,
