@@ -4,6 +4,7 @@ pub mod runtime;
 
 mod stdlib;
 
+use std::fmt::{ self, Debug, Display, Formatter };
 use std::hash::{ Hash, Hasher };
 use std::io::{ Bytes, Read };
 
@@ -141,13 +142,14 @@ pub fn eval_read(
 	Ok(last.unwrap_or(Value::nil()))
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub enum Value {
 	Number(f32),
 	String(String),
 	Boolean(bool),
 	List(Vec<Self>),
 	Symbol(Symbol),
+	Reference(Symbol),
 }
 
 impl Value {
@@ -162,6 +164,7 @@ impl Value {
 			Self::Boolean(_) => "boolean",
 			Self::List(list) => if list.len() > 0 { "list" } else { "nil" },
 			Self::Symbol(_) => "symbol",
+			Self::Reference(_) => "reference",
 		}
 	}
 
@@ -172,6 +175,7 @@ impl Value {
 			Self::Boolean(boolean) => *boolean,
 			Self::List(list) => list.len() > 0,
 			Self::Symbol(_) => true,
+			Self::Reference(_) => true,
 		}
 	}
 }
@@ -179,6 +183,45 @@ impl Value {
 impl Default for Value {
 	fn default() -> Self {
 		Self::nil()
+	}
+}
+
+impl Debug for Value {
+	fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+		match self {
+			Self::Number(number) => write!(f, "{number}"),
+			Self::String(string) => write!(f, "{string:?}"),
+			Self::Boolean(boolean) => write!(f, "{boolean}"),
+			Self::List(list) => if list.is_empty() {
+				write!(f, "nil")
+			} else {
+				write!(f, "({:?}", &list[0])?;
+				for item in &list[1..] {
+					write!(f, " {item:?}")?;
+				}
+				write!(f, ")")?;
+				Ok(())
+			},
+			Self::Symbol(symbol) => write!(f, "{symbol}"),
+			Self::Reference(symbol) => write!(f, "&{symbol}"),
+		}
+	}
+}
+
+impl Display for Value {
+	fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+		match self {
+			Self::Number(number) => write!(f, "{number}"),
+			Self::String(string) => write!(f, "{string}"),
+			Self::Boolean(boolean) => write!(f, "{boolean}"),
+			Self::List(list) => if list.is_empty() {
+				write!(f, "<nil>")
+			} else {
+				write!(f, "<list>")
+			},
+			Self::Symbol(_) => write!(f, "<symbol>"),
+			Self::Reference(_) => write!(f, "&<symbol>"),
+		}
 	}
 }
 
@@ -192,6 +235,7 @@ impl Hash for Value {
 			Self::Boolean(boolean) => boolean.hash(hasher),
 			Self::List(list) => list.hash(hasher),
 			Self::Symbol(symbol) => symbol.hash(hasher),
+			Self::Reference(symbol) => symbol.hash(hasher),
 		}
 	}
 }
@@ -218,6 +262,12 @@ impl Symbol {
 	#[allow(unused)]
 	pub fn unwrap(self) -> String {
 		self.0
+	}
+}
+
+impl Display for Symbol {
+	fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+		write!(f, "'{}", self.0)
 	}
 }
 

@@ -15,7 +15,7 @@ pub fn index() -> HashMap<Symbol, Function> {
 	}
 
 	fns![
-		not, eq, ne, lt, gt, lte, gte, add, sub, mul, div, rem, get, num, cat,
+		not, eq, ne, lt, gt, lte, gte, add, sub, mul, div, rem, get, num, fmt, cat,
 		print, input, time, srand, rand,
 	]
 }
@@ -477,27 +477,39 @@ fn num(args: &[Value]) -> Result<Value, Error> {
 	}))
 }
 
-fn cat(args: &[Value]) -> Result<Value, Error> {
-	Ok(Value::String(cat_impl(args)))
+fn fmt(args: &[Value]) -> Result<Value, Error> {
+	let list = Value::List(args.into());
+	let combined = if args.len() == 1 { &args[0] } else { &list };
+	Ok(Value::String(combined.to_string()))
 }
 
-fn cat_impl(args: &[Value]) -> String {
+fn cat(args: &[Value]) -> Result<Value, Error> {
+	Ok(Value::String(cat_impl(args)?))
+}
+
+fn cat_impl(args: &[Value]) -> Result<String, Error> {
 	let mut output = String::new();
 	for arg in args {
 		match arg {
 			Value::Number(number) => output.push_str(&number.to_string()),
 			Value::String(string) => output.push_str(&string),
 			Value::Boolean(boolean) => output.push_str(&boolean.to_string()),
-			Value::List(list) => output.push_str(&cat_impl(&list)),
-			Value::Symbol(symbol) => output.push_str(symbol.value()),
+			Value::List(list) => output.push_str(&cat_impl(&list)?),
+			_ => return Err(Error {
+				kind: ErrorKind::TypeError,
+				location: None,
+				message: "cannot concatenate symbol".into(),
+			}),
 		}
 	}
 
-	output
+	Ok(output)
 }
 
 fn print(args: &[Value]) -> Result<Value, Error> {
-	println!("{}", cat_impl(args));
+	let formatted = args.iter().map(|v| v.to_string()).collect::<Vec<_>>();
+	println!("{}", formatted.join(""));
+
 	Ok(Value::nil())
 }
 
