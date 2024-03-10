@@ -85,6 +85,13 @@ its caller.
 )                       // }
 ```
 
+Functions can be called by their symbol, effectively delaying the dereferencing:
+
+```
+(def callwith1 (f n) (call f n 1))
+(print 1 2 (callwith1 (quote add) 2))
+```
+
 Often, it may be necessary to pass a symbol or list to a function without it
 being evaluated as a function call or variable reference respectively. To do so,
 the `quote` function can be used, which simply returns its first argument,
@@ -129,6 +136,7 @@ following functions:
 - `rem`
 - `get`
 - `num`
+- `fmt`
 - `cat`
 - `print`
 - `input`
