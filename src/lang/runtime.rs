@@ -10,10 +10,15 @@ pub fn run(value: Value, env: &mut Environment) -> Result<Value, Error> {
 		Value::List(mut items) => match &items[0] {
 			Value::Symbol(symbol @ Symbol(name)) => match name.as_str() {
 				"quote" => Ok(if items.len() > 2 {
-					Value::List(items[1..].to_vec())
+					return Err(Error {
+						kind: ErrorKind::ArgumentError,
+						location: None, // todo
+						message: "quote works on single values only (use list)".into(),
+					})
 				} else {
 					items[1].clone()
 				}),
+				"list" => Ok(Value::List(items[1..].to_vec())),
 				"block" => {
 					let mut last = None;
 					for item in items[1..].to_vec() {
