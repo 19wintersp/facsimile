@@ -88,12 +88,13 @@ its caller.
 Often, it may be necessary to pass a symbol or list to a function without it
 being evaluated as a function call or variable reference respectively. To do so,
 the `quote` function can be used, which simply returns its first argument,
-preventing it from being evaluated. If passed multiple arguments, it will return
-them combined as a list.
+preventing it from being evaluated. To do the same in construction of a list,
+the `list` function is to be used.
 
 ```
 (somefunction ("hello" "world"))         // error: "hello" isn't callable
 (somefunction (quote ("hello" "world"))) // works
+(somefunction (list "hello" "world"))    // works
 ```
 
 Conversely, one may wish to combine many expressions together, similarly to how
