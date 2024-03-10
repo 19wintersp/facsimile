@@ -138,3 +138,8 @@ following functions:
 The standard CLI also passes a special variable, `args`, which is a list of
 strings containing the path of the entrypoint source file followed by any other
 command-line arguments passed to the CLI afterwards.
+
+## Maintenance
+
+Changes have been made to this project for reasons. This is not an indication of
+maintenance nor a sign of confidence in the code.
