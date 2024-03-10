@@ -1,0 +1,6 @@
+(def add1 (n) (add n 1))
+(def doit (f) (call f 2))
+
+(print (add1 2))
+(print ((fun (n) (add n 1)) 2))
+(print (doit (quote add1)))
