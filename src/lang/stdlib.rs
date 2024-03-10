@@ -346,7 +346,7 @@ fn rem(args: &[Value]) -> Result<Value, Error> {
 }
 
 fn get(args: &[Value]) -> Result<Value, Error> {
-	if (2..=4).contains(&args.len()) {
+	if !(2..=4).contains(&args.len()) {
 		return Err(Error {
 			kind: ErrorKind::ArgumentError,
 			location: None,
@@ -394,11 +394,15 @@ fn get(args: &[Value]) -> Result<Value, Error> {
 
 	let end = match end {
 		Some(end) => *end,
+		/*
+		todo: find better syntax for unbounded indexing
 		None => if step > 0 {
 			list.len() as isize
 		} else {
 			-1
 		},
+		*/
+		None => start + step.signum(),
 	};
 
 	if end == start {
