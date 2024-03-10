@@ -603,7 +603,7 @@ fn rand(args: &[Value]) -> Result<Value, Error> {
 			const MULTIPLIER: u64 = 25214903917;
 			const INCREMENT: u64 = 11;
 
-			new_value = seed.overflowing_mul(MULTIPLIER).0.overflowing_add(11).0;
+			new_value = seed.overflowing_mul(MULTIPLIER).0.overflowing_add(INCREMENT).0;
 			Some(new_value)
 		},
 	).unwrap();
